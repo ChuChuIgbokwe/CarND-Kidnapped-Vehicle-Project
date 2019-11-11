@@ -46,6 +46,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
       p.weight = 1.0;
 
       particles.push_back(p);
+
   }
     is_initialized = true;
 
@@ -61,7 +62,29 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
+    float epsilon = 1e-4;
 
+    std::normal_distribution<double>distribution_x(0, std_pos[0]);
+    std::normal_distribution<double>distribution_y(0, std_pos[1]);
+    std::normal_distribution<double>distribution_theta(0 ,std_pos[2]);
+
+    for (int i = 0; i< num_particles; ++i) {
+        if (yaw_rate > epsilon) {
+            particles[i].x +=
+                    (velocity / yaw_rate) * (sin(particles[i].theta + yaw_rate * delta_t) - sin(particles[i].theta));
+            particles[i].y +=
+                    (velocity / yaw_rate) * (cos(particles[i].theta) - cos(particles[i].theta + yaw_rate * delta_t));
+            particles[i].theta += yaw_rate * delta_t;
+        }
+        else{
+            particles[i].x += velocity  * (sin(particles[i].theta + yaw_rate * delta_t) - sin(particles[i].theta));
+            particles[i].y += velocity * (cos(particles[i].theta) - cos(particles[i].theta + yaw_rate * delta_t));
+        }
+        //Adding Gaussian noise to particles
+        particles[i].x +=distribution_x(gen);
+        particles[i].y +=distribution_y(gen);
+        particles[i].theta +=distribution_theta(gen);
+    }
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
